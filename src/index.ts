@@ -5,6 +5,9 @@ import { LoginSchema, UserSchema } from "./validation/UserSchema";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "./prisma/prisma";
 import jwt from "jsonwebtoken";
+import { veryifyUser } from "./middlewares/verifyUser";
+import { requireRole } from "./middlewares/requireRole";
+import { ContestSchema } from "./validation/Contests";
 
 const app = express();
 
@@ -103,6 +106,40 @@ app.post("/api/auth/login", async (req, res) => {
         success: true,
         data: {
             token,
+        },
+        error: null,
+    });
+});
+
+app.post("/api/contests", veryifyUser, requireRole("creator"), async (req, res) => {
+    const { success, data, error } = ContestSchema.safeParse(req.body);
+
+    if (!success)
+        return res.status(400).json({
+            success: false,
+            data: null,
+            error: "INVALID_REQUEST",
+        });
+
+    const contest = await prisma.contests.create({
+        data: {
+            title: data.title,
+            description: data.description,
+            start_time: data.startTime,
+            end_time: data.endTime,
+            creator_id: req.userId,
+        },
+    });
+
+    res.status(201).json({
+        success: true,
+        data: {
+            id: contest.id,
+            title: contest.title,
+            description: contest.description,
+            creatorId: contest.creator_id,
+            startTime: contest.start_time,
+            endTime: contest.end_time,
         },
         error: null,
     });

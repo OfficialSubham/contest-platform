@@ -30,6 +30,8 @@ model Contests {
   title        String
   description  String
   creator_id   Int
+  start_time   DateTime
+  end_time     DateTime
   creator      User            @relation(fields: [creator_id], references: [id], onDelete: Cascade)
   mcqQuestions Mcq_questions[]
   dsaProblems  Dsa_problems[]
