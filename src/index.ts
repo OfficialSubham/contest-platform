@@ -1,14 +1,19 @@
 import "dotenv/config";
 
 import express from "express";
-import { UserSchema } from "./validation/UserSchema";
-import { hash } from "bcryptjs";
+import { LoginSchema, UserSchema } from "./validation/UserSchema";
+import { compare, hash } from "bcryptjs";
 import { prisma } from "./prisma/prisma";
+import jwt from "jsonwebtoken";
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 const SALT = process.env.SALT || 10;
+const JWT_SECRET = process.env.JWT_SECRET || "";
+
+const { sign } = jwt;
+
 app.use(express.json());
 
 app.get("/health", (req, res) => {
@@ -53,6 +58,54 @@ app.post("/api/auth/signup", async (req, res) => {
             error: "EMAIL_ALREADY_EXISTS",
         });
     }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+    const { success, data } = LoginSchema.safeParse(req.body);
+
+    if (!success)
+        return res.status(400).json({
+            success: false,
+            data: null,
+            error: "INVALID_REQUEST",
+        });
+
+    const user = await prisma.user.findUnique({
+        where: {
+            email: data.email,
+        },
+    });
+
+    if (!user)
+        return res.status(401).json({
+            success: false,
+            data: null,
+            error: "INVALID_CREDENTIALS",
+        });
+    const isPasswordValid = await compare(data.password, user.password);
+
+    if (!isPasswordValid)
+        return res.status(401).json({
+            success: false,
+            data: null,
+            error: "INVALID_CREDENTIALS",
+        });
+    const token = sign(
+        {
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+        },
+        JWT_SECRET,
+    );
+    res.json({
+        success: true,
+        data: {
+            token,
+        },
+        error: null,
+    });
 });
 
 app.listen(PORT, () => {
