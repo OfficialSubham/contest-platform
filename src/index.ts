@@ -1,36 +1,19 @@
-import { spawn } from "child_process";
+import "dotenv/config";
 
-const code = `
-    console.log("Hello");
-    let input = "";
-    process.stdin.on("data", d => input += d);
-    process.stdin.on("end", () => {
-    console.log("INPUT : ", input.trim())
-    while(true) {}
+import express from "express";
+
+const app = express();
+
+const PORT = process.env.PORT || 3000;
+
+app.use(express.json());
+
+app.get("/health", (req, res) => {
+    res.status(201).json({
+        message: "Working",
     });
-`;
-
-const docker = spawn("docker", [
-  "run",
-  "--rm",
-  "-i",
-  "--cpus=0.5",
-  "--memory=128m",
-  "--network=none",
-  "js-runner",
-]);
-
-docker.stdin.write(code);
-docker.stdin.end();
-
-docker.stdout.on("data", (d) => {
-  console.log("STDOUT : ", d.toString());
 });
 
-docker.stderr.on("data", (d) => {
-  console.log("STDERR : ", d.toString());
-});
-
-docker.on("close", (d) => {
-  console.log("EXIT CODE : ", d);
+app.listen(PORT, () => {
+    console.log(`Your app is listening in http://localhost:${PORT}`);
 });
