@@ -7,7 +7,7 @@ import { prisma } from "./prisma/prisma";
 import jwt from "jsonwebtoken";
 import { veryifyUser } from "./middlewares/verifyUser";
 import { requireRole } from "./middlewares/requireRole";
-import { ContestId, ContestSchema } from "./validation/Contests";
+import { ContestId, ContestSchema, McqSchema } from "./validation/Contests";
 
 const app = express();
 
@@ -224,6 +224,66 @@ app.get("/api/contests/:contestId", veryifyUser, async (req, res) => {
         error: null,
     });
 });
+
+app.post(
+    "/api/contest/:contestId/mcq",
+    veryifyUser,
+    requireRole("creator"),
+    async (req, res) => {
+        const { contestId } = req.params;
+        if (!ContestId.safeParse(contestId).success)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "INVALID_REQUEST",
+            });
+        const { success, data } = McqSchema.safeParse(req.body);
+
+        if (!success)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "INVALID_REQUEST",
+            });
+        const contest = await prisma.contests.findUnique({
+            where: {
+                id: Number(contestId),
+            },
+        });
+
+        if (!contest)
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_FOUND",
+            });
+        else if (contest.creator_id != req.userId)
+            return res.status(403).json({
+                success: false,
+                data: null,
+                error: "FORBIDDEN",
+            });
+
+        const mcq = await prisma.mcq_questions.create({
+            data: {
+                contest_id: contest.id,
+                question_text: data.questionText,
+                options: data.options,
+                correct_option_index: data.correctOptionIndex,
+                points: data.points,
+            },
+        });
+
+        res.status(201).json({
+            success,
+            data: {
+                id: mcq.id,
+                contestId: mcq.contest_id,
+            },
+            error: null,
+        });
+    },
+);
 
 app.listen(PORT, () => {
     console.log(`Your app is listening in http://localhost:${PORT}`);

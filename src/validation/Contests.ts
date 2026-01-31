@@ -8,3 +8,10 @@ export const ContestSchema = z.object({
 });
 
 export const ContestId = z.coerce.number();
+
+export const McqSchema = z.object({
+    questionText: z.string(),
+    options: z.string().array(),
+    correctOptionIndex: z.number(),
+    points: z.number().optional(),
+});
