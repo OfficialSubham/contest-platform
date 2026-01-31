@@ -6,3 +6,5 @@ export const ContestSchema = z.object({
     startTime: z.iso.datetime({ offset: true }),
     endTime: z.iso.datetime({ offset: true }),
 });
+
+export const ContestId = z.coerce.number();

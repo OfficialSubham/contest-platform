@@ -7,7 +7,7 @@ import { prisma } from "./prisma/prisma";
 import jwt from "jsonwebtoken";
 import { veryifyUser } from "./middlewares/verifyUser";
 import { requireRole } from "./middlewares/requireRole";
-import { ContestSchema } from "./validation/Contests";
+import { ContestId, ContestSchema } from "./validation/Contests";
 
 const app = express();
 
@@ -140,6 +140,86 @@ app.post("/api/contests", veryifyUser, requireRole("creator"), async (req, res) 
             creatorId: contest.creator_id,
             startTime: contest.start_time,
             endTime: contest.end_time,
+        },
+        error: null,
+    });
+});
+
+app.get("/api/contests/:contestId", veryifyUser, async (req, res) => {
+    const { contestId } = req.params;
+    const { success, data } = ContestId.safeParse(contestId);
+    if (!success)
+        return res.status(400).json({
+            success: false,
+            data: null,
+            error: "INVALID_REQUEST",
+        });
+
+    const contest = await prisma.contests.findUnique({
+        where: {
+            id: data,
+        },
+        include: {
+            mcqQuestions: {
+                select: {
+                    id: true,
+                    question_text: true,
+                    options: true,
+                    points: true,
+                },
+            },
+            dsaProblems: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    tags: true,
+                    points: true,
+                    time_limit: true,
+                    memory_limit: true,
+                },
+            },
+        },
+    });
+
+    if (!contest)
+        return res.status(404).json({
+            success: false,
+            data: null,
+            error: "CONTEST_NOT_FOUND",
+        });
+
+    const mcqs = contest.mcqQuestions.map((mcq) => {
+        return {
+            id: mcq.id,
+            questionText: mcq.question_text,
+            options: mcq.options,
+            points: mcq.points,
+        };
+    });
+    const dsaProblems = contest.dsaProblems.map((dsa) => {
+        return {
+            id: dsa.id,
+            title: dsa.title,
+            description: dsa.description,
+            tags: dsa.tags,
+            points: dsa.points,
+            timeLimit: dsa.time_limit,
+            memoryLimit: dsa.memory_limit,
+        };
+    });
+
+    return res.json({
+        success,
+        data: {
+            id: contest.id,
+            title: contest.title,
+            description: contest.description,
+            startTime: contest.start_time,
+            endTime: contest.end_time,
+            creatorId: contest.creator_id,
+            mcqs,
+            dsaProblems,
         },
         error: null,
     });
