@@ -9,3 +9,8 @@ Then some how with the help of AI i came to know about the tsup package which co
 Now coming to this project I was not able to figure out how can i compile this project and run then i started to compare this project with my previous project after reading the error i find out OF MY OWN that the error is because of dotenv file then i noticed that my dotenv file dependency was in devdepedencies which kind of vanishes after begin compiled so we mostly install types there then i move it out from there to dependencies then everything works as fine as \*\*\*\*;
 
 - learned about datetime zod and offset true for allowing timezones
+
+31/01/26
+
+- Thinking about implementing boundary check for the start and end time of creating a contest
+- I will do it tomorrow noting it in my work log
