@@ -7,7 +7,12 @@ import { prisma } from "./prisma/prisma";
 import jwt from "jsonwebtoken";
 import { veryifyUser } from "./middlewares/verifyUser";
 import { requireRole } from "./middlewares/requireRole";
-import { ContestId, ContestSchema, McqSchema } from "./validation/Contests";
+import {
+    ContestId,
+    ContestSchema,
+    McqSchema,
+    SubmitMcqSchema,
+} from "./validation/Contests";
 
 const app = express();
 
@@ -226,7 +231,7 @@ app.get("/api/contests/:contestId", veryifyUser, async (req, res) => {
 });
 
 app.post(
-    "/api/contest/:contestId/mcq",
+    "/api/contests/:contestId/mcq",
     veryifyUser,
     requireRole("creator"),
     async (req, res) => {
@@ -279,6 +284,80 @@ app.post(
             data: {
                 id: mcq.id,
                 contestId: mcq.contest_id,
+            },
+            error: null,
+        });
+    },
+);
+
+app.post(
+    "/api/contests/:contestId/mcq/:questionId/submit",
+    veryifyUser,
+    requireRole("contestee"),
+    async (req, res) => {
+        const { success, data } = SubmitMcqSchema.safeParse({
+            ...req.body,
+            ...req.params,
+        });
+
+        if (!success)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "INVALID_REQUEST",
+            });
+
+        const mcqContestWithQuestion = await prisma.mcq_questions.findUnique({
+            where: {
+                contest_id: data.contestId,
+                id: data.questionId,
+            },
+            include: {
+                contest: true,
+                mcqSubmissions: true,
+            },
+        });
+        const currentDate = Date.now();
+        if (!mcqContestWithQuestion)
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "QUESTION_NOT_FOUND",
+            });
+        else if (currentDate < mcqContestWithQuestion.contest.start_time.getTime())
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_ACTIVE",
+            });
+
+        const alreadySubmitted = mcqContestWithQuestion.mcqSubmissions.find(
+            (mcq) => mcq.user_id == req.userId,
+        );
+        if (alreadySubmitted)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "ALREADY_SUBMITTED",
+            });
+
+        const isCorrect =
+            mcqContestWithQuestion.correct_option_index == data.selectedOptionIndex;
+
+        const submittedAnswer = await prisma.mcq_submission.create({
+            data: {
+                is_correct: isCorrect,
+                selected_option_index: data.selectedOptionIndex,
+                question_id: data.questionId,
+                user_id: req.userId,
+                points_earned: isCorrect ? mcqContestWithQuestion.points : 0,
+            },
+        });
+        res.status(201).json({
+            success: true,
+            data: {
+                isCorrect: submittedAnswer.is_correct,
+                pointsEarned: submittedAnswer.points_earned,
             },
             error: null,
         });

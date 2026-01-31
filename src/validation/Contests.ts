@@ -15,3 +15,9 @@ export const McqSchema = z.object({
     correctOptionIndex: z.number(),
     points: z.number().optional(),
 });
+
+export const SubmitMcqSchema = z.object({
+    contestId: z.coerce.number(),
+    questionId: z.coerce.number(),
+    selectedOptionIndex: z.number(),
+});
