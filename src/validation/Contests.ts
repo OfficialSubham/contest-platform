@@ -21,3 +21,20 @@ export const SubmitMcqSchema = z.object({
     questionId: z.coerce.number(),
     selectedOptionIndex: z.number(),
 });
+
+export const DsaSchema = z.object({
+    contestId: z.coerce.number(),
+    title: z.string(),
+    description: z.string(),
+    tags: z.string().array().optional(),
+    points: z.number(),
+    timeLimit: z.number(),
+    memoryLimit: z.number(),
+    testCases: z
+        .object({
+            input: z.string(),
+            expectedOutput: z.string(),
+            isHidden: z.boolean(),
+        })
+        .array(),
+});

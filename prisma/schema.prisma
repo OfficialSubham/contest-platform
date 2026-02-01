@@ -54,7 +54,7 @@ model Dsa_problems {
   contest_id     Int
   title          String
   description    String
-  tags           String[]
+  tags           String[]         @default([])
   points         Int              @default(100)
   time_limit     Int              @default(2000)
   memory_limit   Int              @default(256)

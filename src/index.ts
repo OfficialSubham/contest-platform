@@ -10,6 +10,7 @@ import { requireRole } from "./middlewares/requireRole";
 import {
     ContestId,
     ContestSchema,
+    DsaSchema,
     McqSchema,
     SubmitMcqSchema,
 } from "./validation/Contests";
@@ -358,6 +359,74 @@ app.post(
             data: {
                 isCorrect: submittedAnswer.is_correct,
                 pointsEarned: submittedAnswer.points_earned,
+            },
+            error: null,
+        });
+    },
+);
+
+app.post(
+    "/api/contests/:contestId/dsa",
+    veryifyUser,
+    requireRole("creator"),
+    async (req, res) => {
+        const { success, data, error } = DsaSchema.safeParse({
+            ...req.body,
+            ...req.params,
+        });
+        if (!success)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "INVALID_REQUEST",
+            });
+
+        const contest = await prisma.contests.findUnique({
+            where: {
+                id: data.contestId,
+            },
+        });
+
+        if (!contest)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_FOUND",
+            });
+        else if (contest.creator_id != req.userId)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "FORBIDDEN",
+            });
+
+        const dsaProblem = await prisma.dsa_problems.create({
+            data: {
+                title: data.title,
+                description: data.description,
+                contest_id: data.contestId,
+                tags: data.tags,
+                memory_limit: data.memoryLimit,
+                points: data.points,
+                time_limit: data.timeLimit,
+            },
+        });
+
+        await prisma.test_cases.createMany({
+            data: data.testCases.map((t) => {
+                return {
+                    problem_id: dsaProblem.id,
+                    input: t.input,
+                    expected_output: t.expectedOutput,
+                };
+            }),
+        });
+
+        res.status(201).json({
+            success: true,
+            data: {
+                id: dsaProblem.id,
+                contestId: data.contestId,
             },
             error: null,
         });
