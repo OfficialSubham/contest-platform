@@ -38,3 +38,5 @@ export const DsaSchema = z.object({
         })
         .array(),
 });
+
+export const problemId = z.coerce.number();

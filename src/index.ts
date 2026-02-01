@@ -12,6 +12,7 @@ import {
     ContestSchema,
     DsaSchema,
     McqSchema,
+    problemId,
     SubmitMcqSchema,
 } from "./validation/Contests";
 
@@ -418,6 +419,7 @@ app.post(
                     problem_id: dsaProblem.id,
                     input: t.input,
                     expected_output: t.expectedOutput,
+                    is_hidden: t.isHidden,
                 };
             }),
         });
@@ -432,6 +434,61 @@ app.post(
         });
     },
 );
+
+app.get("/api/problems/:problemId", veryifyUser, async (req, res) => {
+    const { success, data } = problemId.safeParse(req.params.problemId);
+
+    if (!success)
+        return res.status(400).json({
+            success: false,
+            data: null,
+            error: "INVALID_REQUEST",
+        });
+
+    const problem = await prisma.dsa_problems.findUnique({
+        where: {
+            id: data,
+        },
+        include: {
+            testCases: {
+                where: {
+                    is_hidden: false,
+                },
+            },
+        },
+    });
+
+    if (!problem)
+        return res.status(404).json({
+            success: false,
+            data: null,
+            error: "PROBLEM_NOT_FOUND",
+        });
+
+    const visibleTestCases = problem.testCases.map((t) => {
+        console.log(t, "\n");
+        return {
+            input: t.input,
+            expectedOutput: t.expected_output,
+        };
+    });
+
+    res.json({
+        success: true,
+        data: {
+            id: problem.id,
+            contestId: problem.contest_id,
+            title: problem.title,
+            description: problem.description,
+            tags: problem.tags,
+            points: problem.points,
+            timeLimit: problem.time_limit,
+            memoryLimit: problem.memory_limit,
+            visibleTestCases,
+        },
+        error: null,
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`Your app is listening in http://localhost:${PORT}`);
