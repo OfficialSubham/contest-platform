@@ -14,3 +14,39 @@ Now coming to this project I was not able to figure out how can i compile this p
 
 - Thinking about implementing boundary check for the start and end time of creating a contest
 - I will do it tomorrow noting it in my work log
+
+02/02/26
+
+- Today I created the Submit dsa ans route
+  Elaborating all the problem s I faced while creating this route
+  First of all I know I will face problems cause i am building it fully locally
+  Locally means I am not using any external thing to run the user's code
+
+-> The thing I am doing to run the user code is
+Using a docker container
+Docker file is added here in the project
+
+This is the most important part of the project which will teach me a lot of things
+
+So my docker container is like I am using a node alpine image where i am defining a user
+who is not a root user so the user cannot hijack my cloud machine by running malicious code init
+like infinite loop/ deleting all files and all
+
+There i am coping run.sh file from here to that image
+
+in run.sh file i am taking all the input which i give from the post dsa submission route
+then extraction the input and the code from that file and putting it to main.js and input.txt
+
+at last i am running the main.js file and also providing the input that it requires
+
+Another thing which is, as i sovle this with the help of ai I know there is another good way to solve this but not particularly know how can i do that I will do it in future when I will devlop this again with bun.
+There it was doing two seperate streams instead of doing stdin it was mounting the code as a file
+
+Now everything is simple which is just route handles nothing more
+
+So the actual learning from this project is
+More about docker stuff which is hard and I choose it.
+I am creating and deleting after running a container for each test case locally on my machine using code
+I stuck at "-i" use. There actually I was not able to figure out how can i actually write user's program to that container then after using -i it was writing before that docker was not giving any time to write files inside it.
+
+Few more things to learn after this project and after completing the websocket one is docker (IMP) and Linux mostly for now the bash commands
