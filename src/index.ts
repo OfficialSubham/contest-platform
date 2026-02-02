@@ -11,10 +11,13 @@ import {
     ContestId,
     ContestSchema,
     DsaSchema,
+    DsaSolutionSchema,
     McqSchema,
     problemId,
     SubmitMcqSchema,
 } from "./validation/Contests";
+import { codeResult } from "./lib/utils";
+import { normalize } from "node:path";
 
 const app = express();
 
@@ -489,6 +492,123 @@ app.get("/api/problems/:problemId", veryifyUser, async (req, res) => {
         error: null,
     });
 });
+
+app.post(
+    "/api/problems/:problemId/submit",
+    veryifyUser,
+    requireRole("contestee"),
+    async (req, res) => {
+        const { success, data } = DsaSolutionSchema.safeParse({
+            ...req.body,
+            ...req.params,
+        });
+
+        if (!success)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "INVALID_REQUEST",
+            });
+
+        const currentDate = Date.now();
+
+        const problem = await prisma.dsa_problems.findUnique({
+            where: {
+                id: data.problemId,
+            },
+            include: {
+                testCases: true,
+                contest: true,
+            },
+        });
+
+        if (!problem)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "PROBLEM_NOT_FOUND",
+            });
+        else if (currentDate < problem.contest.start_time.getTime())
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_ACTIVE",
+            });
+
+        let testCasesPassed = 0;
+        let error = "";
+        const startTime = Date.now();
+        for (const t of problem.testCases) {
+            const result = await codeResult(data.code, t.input);
+            if (result.exitCode == 124) {
+                error = "time_limit_exceeded";
+                break;
+            } else if (result.exitCode !== 0) {
+                error = "runtime_error";
+                break;
+            }
+            if (normalize(result.stdout) == normalize(t.expected_output)) {
+                testCasesPassed++;
+            }
+        }
+        const endTime = Date.now();
+        if (error != "")
+            return res.json({
+                success: true,
+                data: {
+                    status: error,
+                    pointsEarned: 0,
+                    testCasesPassed,
+                    totalTestCases: problem.testCases.length,
+                },
+            });
+        const pointsEarned = Math.floor(
+            (testCasesPassed / problem.testCases.length) * problem.points,
+        );
+
+        const alreadySubmitted = await prisma.dsa_submission.findFirst({
+            where: {
+                problem_id: data.problemId,
+                user_id: req.userId,
+            },
+        });
+
+        if (alreadySubmitted)
+            return res.status(400).json({
+                success: false,
+                data: null,
+                error: "ALREADY_SUBMITTED",
+            });
+
+        const submission = await prisma.dsa_submission.create({
+            data: {
+                code: data.code,
+                execution_time: endTime - startTime,
+                language: data.language,
+                status:
+                    testCasesPassed == problem.testCases.length
+                        ? "accepted"
+                        : "wrong_answer",
+                user_id: req.userId,
+                problem_id: data.problemId,
+                points_earned: pointsEarned,
+                test_cases_passed: testCasesPassed,
+                total_test_cases: problem.testCases.length,
+            },
+        });
+
+        res.status(201).json({
+            success: true,
+            data: {
+                status: submission.status,
+                pointsEarned: submission.points_earned,
+                testCasesPassed: submission.test_cases_passed,
+                totalTestCases: submission.total_test_cases,
+            },
+            error: null,
+        });
+    },
+);
 
 app.listen(PORT, () => {
     console.log(`Your app is listening in http://localhost:${PORT}`);

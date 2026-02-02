@@ -32,6 +32,7 @@ import { spawn } from "child_process";
 
 export const codeResult = (
     code: string,
+    input: string,
 ): Promise<{
     stdout: string;
     stderr: string;
@@ -51,7 +52,7 @@ export const codeResult = (
             "js-runner",
         ]);
 
-        docker.stdin.write(code);
+        docker.stdin.write(`${code}\n__INPUT__\n${input}`);
         docker.stdin.end();
 
         docker.stdout.on("data", (d) => {
