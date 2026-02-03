@@ -645,6 +645,55 @@ app.post(
     },
 );
 
+app.get("/api/contests/:contestId/leaderboard", veryifyUser, async (req, res) => {
+    const { success, data } = ContestId.safeParse(req.params.contestId);
+
+    if (!success)
+        return res.status(400).json({
+            success: false,
+            data: null,
+            error: "INVALID_REQUEST",
+        });
+
+    const contestLeaderboard = await prisma.contest_leaderboard.findMany({
+        where: {
+            contestId: data,
+        },
+        include: {
+            user: true,
+        },
+        orderBy: {
+            points: "desc",
+        },
+    });
+
+    if (!contestLeaderboard.length)
+        return res.status(400).json({
+            success: false,
+            data: null,
+            error: "CONTEST_NOT_FOUND",
+        });
+
+    let rank = 1;
+    let lastScore: number | null = null;
+    const rankData = contestLeaderboard.map((d) => {
+        if (lastScore && d.points < lastScore) rank++;
+        lastScore = d.points;
+        return {
+            userId: d.userId,
+            name: d.user.name,
+            totalPoints: d.points,
+            rank,
+        };
+    });
+
+    res.json({
+        success,
+        data: rankData,
+        error: null,
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Your app is listening in http://localhost:${PORT}`);
 });
