@@ -50,3 +50,14 @@ I am creating and deleting after running a container for each test case locally 
 I stuck at "-i" use. There actually I was not able to figure out how can i actually write user's program to that container then after using -i it was writing before that docker was not giving any time to write files inside it.
 
 Few more things to learn after this project and after completing the websocket one is docker (IMP) and Linux mostly for now the bash commands
+
+03/02/26
+
+- Completed the full project but still I have to recheck all the routes cause i want to make sure I pass as much testcases as possible
+  Today I relearn/learn cause I previously know that but still forget about the upsert method of prisma which create it in db if it is not there.
+  Also learned about the use of @@unique in db schema
+  It is actually doing something like this in every row it can have same contestid or userId but together the same userid and contestId cannot exist
+  And using @index which will make the contestid or anything you will specify to be indexed which help to find the data fast
+  These are the thing which i think a lot to learn as a beginner from this project
+
+See you in the next sportz-websocket-elite project
