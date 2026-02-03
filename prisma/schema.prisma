@@ -14,27 +14,29 @@ datasource db {
 }
 
 model User {
-  id             Int              @id @default(autoincrement())
-  name           String
-  email          String           @unique
-  password       String
-  role           Role
-  created_at     DateTime         @default(now())
-  contests       Contests[]
-  mcqSubmissions Mcq_submission[]
-  dsaSubmissions Dsa_submission[]
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  email               String                @unique
+  password            String
+  role                Role
+  created_at          DateTime              @default(now())
+  contests            Contests[]
+  mcqSubmissions      Mcq_submission[]
+  dsaSubmissions      Dsa_submission[]
+  contestLeaderboards Contest_leaderboard[]
 }
 
 model Contests {
-  id           Int             @id @default(autoincrement())
-  title        String
-  description  String
-  creator_id   Int
-  start_time   DateTime
-  end_time     DateTime
-  creator      User            @relation(fields: [creator_id], references: [id], onDelete: Cascade)
-  mcqQuestions Mcq_questions[]
-  dsaProblems  Dsa_problems[]
+  id                  Int                   @id @default(autoincrement())
+  title               String
+  description         String
+  creator_id          Int
+  start_time          DateTime
+  end_time            DateTime
+  creator             User                  @relation(fields: [creator_id], references: [id], onDelete: Cascade)
+  mcqQuestions        Mcq_questions[]
+  dsaProblems         Dsa_problems[]
+  contestLeaderboards Contest_leaderboard[]
 }
 
 model Mcq_questions {
@@ -100,6 +102,18 @@ model Dsa_submission {
   submitted_at      DateTime     @default(now())
   user              User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
   problem           Dsa_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+}
+
+model Contest_leaderboard {
+  id        Int      @id @default(autoincrement())
+  contestId Int
+  userId    Int
+  points    Int
+  contest   Contests @relation(fields: [contestId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([contestId, userId])
+  @@index([contestId])
 }
 
 enum Role {

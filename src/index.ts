@@ -358,6 +358,24 @@ app.post(
                 points_earned: isCorrect ? mcqContestWithQuestion.points : 0,
             },
         });
+
+        await prisma.contest_leaderboard.upsert({
+            where: {
+                contestId_userId: {
+                    contestId: data.contestId,
+                    userId: req.userId,
+                },
+            },
+            update: {
+                points: { increment: submittedAnswer.points_earned },
+            },
+            create: {
+                contestId: data.contestId,
+                userId: req.userId,
+                points: submittedAnswer.points_earned,
+            },
+        });
+
         res.status(201).json({
             success: true,
             data: {
@@ -594,6 +612,23 @@ app.post(
                 points_earned: pointsEarned,
                 test_cases_passed: testCasesPassed,
                 total_test_cases: problem.testCases.length,
+            },
+        });
+
+        await prisma.contest_leaderboard.upsert({
+            where: {
+                contestId_userId: {
+                    contestId: problem.contest_id,
+                    userId: req.userId,
+                },
+            },
+            update: {
+                points: { increment: pointsEarned },
+            },
+            create: {
+                contestId: problem.contest_id,
+                userId: req.userId,
+                points: pointsEarned,
             },
         });
 
