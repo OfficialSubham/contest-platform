@@ -487,7 +487,6 @@ app.get("/api/problems/:problemId", veryifyUser, async (req, res) => {
         });
 
     const visibleTestCases = problem.testCases.map((t) => {
-        console.log(t, "\n");
         return {
             input: t.input,
             expectedOutput: t.expected_output,
