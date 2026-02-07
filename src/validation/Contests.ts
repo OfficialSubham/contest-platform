@@ -9,12 +9,14 @@ export const ContestSchema = z.object({
 
 export const ContestId = z.coerce.number();
 
-export const McqSchema = z.object({
-    questionText: z.string(),
-    options: z.string().array(),
-    correctOptionIndex: z.number(),
-    points: z.number().optional(),
-});
+export const McqSchema = z
+    .object({
+        questionText: z.string(),
+        options: z.string().array(),
+        correctOptionIndex: z.number().int().nonnegative(),
+        points: z.number().optional(),
+    })
+    .refine((data) => data.correctOptionIndex < data.options.length);
 
 export const SubmitMcqSchema = z.object({
     contestId: z.coerce.number(),
