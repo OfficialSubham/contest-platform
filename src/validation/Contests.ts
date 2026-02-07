@@ -39,7 +39,7 @@ export const DsaSchema = z.object({
         .array(),
 });
 
-export const problemId = z.coerce.number();
+export const problemID = z.coerce.number();
 
 export const DsaSolutionSchema = z.object({
     problemId: z.coerce.number(),

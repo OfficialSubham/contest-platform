@@ -13,7 +13,7 @@ import {
     DsaSchema,
     DsaSolutionSchema,
     McqSchema,
-    problemId,
+    problemID,
     SubmitMcqSchema,
 } from "./validation/Contests";
 import { codeResult } from "./lib/utils";
@@ -157,7 +157,16 @@ app.post("/api/contests", veryifyUser, requireRole("creator"), async (req, res) 
 
 app.get("/api/contests/:contestId", veryifyUser, async (req, res) => {
     const { contestId } = req.params;
+
+    if (isNaN(Number(contestId)))
+        return res.status(404).json({
+            success: false,
+            data: null,
+            error: "CONTEST_NOT_FOUND",
+        });
+
     const { success, data } = ContestId.safeParse(contestId);
+
     if (!success)
         return res.status(400).json({
             success: false,
@@ -241,11 +250,11 @@ app.post(
     requireRole("creator"),
     async (req, res) => {
         const { contestId } = req.params;
-        if (!ContestId.safeParse(contestId).success)
-            return res.status(400).json({
+        if (isNaN(Number(contestId)))
+            return res.status(404).json({
                 success: false,
                 data: null,
-                error: "INVALID_REQUEST",
+                error: "CONTEST_NOT_FOUND",
             });
         const { success, data } = McqSchema.safeParse(req.body);
 
@@ -300,6 +309,20 @@ app.post(
     veryifyUser,
     requireRole("contestee"),
     async (req, res) => {
+        const { contestId, questionId } = req.params;
+        if (isNaN(Number(contestId)))
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_FOUND",
+            });
+        else if (isNaN(Number(questionId)))
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "QUESTION_NOT_FOUND",
+            });
+
         const { success, data } = SubmitMcqSchema.safeParse({
             ...req.body,
             ...req.params,
@@ -392,6 +415,13 @@ app.post(
     veryifyUser,
     requireRole("creator"),
     async (req, res) => {
+        const { contestId } = req.params;
+        if (isNaN(Number(contestId)))
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "CONTEST_NOT_FOUND",
+            });
         const { success, data, error } = DsaSchema.safeParse({
             ...req.body,
             ...req.params,
@@ -457,7 +487,16 @@ app.post(
 );
 
 app.get("/api/problems/:problemId", veryifyUser, async (req, res) => {
-    const { success, data } = problemId.safeParse(req.params.problemId);
+    const { problemId } = req.params;
+
+    if (isNaN(Number(problemId)))
+        return res.status(404).json({
+            success: false,
+            data: null,
+            error: "PROBLEM_NOT_FOUND",
+        });
+
+    const { success, data } = problemID.safeParse(req.params.problemId);
 
     if (!success)
         return res.status(400).json({
@@ -515,6 +554,15 @@ app.post(
     veryifyUser,
     requireRole("contestee"),
     async (req, res) => {
+        const { problemId } = req.params;
+
+        if (isNaN(Number(problemId)))
+            return res.status(404).json({
+                success: false,
+                data: null,
+                error: "PROBLEM_NOT_FOUND",
+            });
+
         const { success, data } = DsaSolutionSchema.safeParse({
             ...req.body,
             ...req.params,
@@ -645,6 +693,15 @@ app.post(
 );
 
 app.get("/api/contests/:contestId/leaderboard", veryifyUser, async (req, res) => {
+    const { contestId } = req.params;
+
+    if (isNaN(Number(contestId)))
+        return res.status(404).json({
+            success: false,
+            data: null,
+            error: "CONTEST_NOT_FOUND",
+        });
+
     const { success, data } = ContestId.safeParse(req.params.contestId);
 
     if (!success)
