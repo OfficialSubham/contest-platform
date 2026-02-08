@@ -47,6 +47,6 @@ export const problemID = z.coerce.number();
 
 export const DsaSolutionSchema = z.object({
     problemId: z.coerce.number(),
-    code: z.string(),
+    code: z.string().min(5),
     language: z.string(),
 });

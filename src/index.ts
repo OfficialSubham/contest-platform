@@ -352,7 +352,10 @@ app.post(
                 data: null,
                 error: "QUESTION_NOT_FOUND",
             });
-        else if (currentDate < mcqContestWithQuestion.contest.start_time.getTime())
+        else if (
+            currentDate < mcqContestWithQuestion.contest.start_time.getTime() ||
+            currentDate >= mcqContestWithQuestion.contest.end_time.getTime()
+        )
             return res.status(400).json({
                 success: false,
                 data: null,
@@ -588,12 +591,15 @@ app.post(
         });
 
         if (!problem)
-            return res.status(400).json({
+            return res.status(404).json({
                 success: false,
                 data: null,
                 error: "PROBLEM_NOT_FOUND",
             });
-        else if (currentDate < problem.contest.start_time.getTime())
+        else if (
+            currentDate < problem.contest.start_time.getTime() ||
+            currentDate >= problem.contest.end_time.getTime()
+        )
             return res.status(400).json({
                 success: false,
                 data: null,
@@ -772,7 +778,7 @@ app.get("/api/contests/:contestId/leaderboard", veryifyUser, async (req, res) =>
     });
 
     if (!contestLeaderboard.length)
-        return res.status(400).json({
+        return res.status(404).json({
             success: false,
             data: null,
             error: "CONTEST_NOT_FOUND",
