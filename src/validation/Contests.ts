@@ -21,7 +21,7 @@ export const McqSchema = z
 export const SubmitMcqSchema = z.object({
     contestId: z.coerce.number(),
     questionId: z.coerce.number(),
-    selectedOptionIndex: z.number(),
+    selectedOptionIndex: z.number().nonnegative(),
 });
 
 export const DsaSchema = z.object({
