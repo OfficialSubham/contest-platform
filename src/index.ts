@@ -637,55 +637,103 @@ app.post(
                 user_id: req.userId,
             },
         });
-
-        if (alreadySubmitted)
-            return res.status(400).json({
-                success: false,
-                data: null,
-                error: "ALREADY_SUBMITTED",
+        //If the result is not already submitted i will do the following things
+        if (!alreadySubmitted) {
+            const submission = await prisma.dsa_submission.create({
+                data: {
+                    code: data.code,
+                    execution_time: endTime - startTime,
+                    language: data.language,
+                    status:
+                        testCasesPassed == problem.testCases.length
+                            ? "accepted"
+                            : "wrong_answer",
+                    user_id: req.userId,
+                    problem_id: data.problemId,
+                    points_earned: pointsEarned,
+                    test_cases_passed: testCasesPassed,
+                    total_test_cases: problem.testCases.length,
+                },
             });
 
-        const submission = await prisma.dsa_submission.create({
-            data: {
-                code: data.code,
-                execution_time: endTime - startTime,
-                language: data.language,
-                status:
-                    testCasesPassed == problem.testCases.length
-                        ? "accepted"
-                        : "wrong_answer",
-                user_id: req.userId,
-                problem_id: data.problemId,
-                points_earned: pointsEarned,
-                test_cases_passed: testCasesPassed,
-                total_test_cases: problem.testCases.length,
-            },
-        });
-
-        await prisma.contest_leaderboard.upsert({
-            where: {
-                contestId_userId: {
+            await prisma.contest_leaderboard.upsert({
+                where: {
+                    contestId_userId: {
+                        contestId: problem.contest_id,
+                        userId: req.userId,
+                    },
+                },
+                update: {
+                    points: { increment: pointsEarned },
+                },
+                create: {
                     contestId: problem.contest_id,
                     userId: req.userId,
+                    points: pointsEarned,
                 },
-            },
-            update: {
-                points: { increment: pointsEarned },
-            },
-            create: {
-                contestId: problem.contest_id,
-                userId: req.userId,
-                points: pointsEarned,
-            },
-        });
+            });
 
-        res.status(201).json({
+            return res.status(201).json({
+                success: true,
+                data: {
+                    status: submission.status,
+                    pointsEarned: submission.points_earned,
+                    testCasesPassed: submission.test_cases_passed,
+                    totalTestCases: submission.total_test_cases,
+                },
+                error: null,
+            });
+        }
+
+        if (pointsEarned >= alreadySubmitted.points_earned) {
+            const resubmission = await prisma.dsa_submission.update({
+                where: {
+                    id: alreadySubmitted.id,
+                },
+                data: {
+                    code: data.code,
+                    execution_time: endTime - startTime,
+                    status:
+                        testCasesPassed == problem.testCases.length
+                            ? "accepted"
+                            : "wrong_answer",
+                    points_earned: pointsEarned,
+                    test_cases_passed: testCasesPassed,
+                    total_test_cases: problem.testCases.length,
+                },
+            });
+
+            await prisma.contest_leaderboard.update({
+                where: {
+                    contestId_userId: {
+                        contestId: problem.contest_id,
+                        userId: req.userId,
+                    },
+                },
+                data: {
+                    points: pointsEarned,
+                },
+            });
+
+            return res.status(201).json({
+                success: true,
+                data: {
+                    status: resubmission.status,
+                    pointsEarned: resubmission.points_earned,
+                    testCasesPassed: resubmission.test_cases_passed,
+                    totalTestCases: resubmission.total_test_cases,
+                },
+                error: null,
+            });
+        }
+
+        return res.status(201).json({
             success: true,
             data: {
-                status: submission.status,
-                pointsEarned: submission.points_earned,
-                testCasesPassed: submission.test_cases_passed,
-                totalTestCases: submission.total_test_cases,
+                status: alreadySubmitted.status,
+                pointsEarned: pointsEarned,
+                testCasesPassed: testCasesPassed,
+                totalTestCases: alreadySubmitted.total_test_cases,
             },
             error: null,
         });
