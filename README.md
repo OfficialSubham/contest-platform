@@ -61,3 +61,24 @@ Few more things to learn after this project and after completing the websocket o
   These are the thing which i think a lot to learn as a beginner from this project
 
 See you in the next sportz-websocket-elite project
+
+08-02-26
+-Today I ultimately able to pass 103/111 testcases now I have few things to share
+
+1. My docker is working but the problem is like i am actually not able to run the user's code cause they are just returning
+   functions not running the functions this is one point where I am stuck, also have many other points but this one is the most critical one
+2. Now I think that I will create something like judge0 which will not be highly sclable but will easily work in anyone's local machine for this of
+   things.
+3. Another important thing which is I am thinking to open a youtuble channel for few reasons like
+   i) To improve my english speaking skills
+   ii) To improve my way of approaching to problems and all I will upload everything I do/build
+   iii) If anyday I think I had did this previously then I can go through the video.
+   iv) It will also improve my network
+
+Final Takeaways from this project is
+I build this projects and improved my CRUD operations skills but in the main thing I got stuck in order to run user's code
+This thing also motivates me that there is a lot of thing to learn and I know very very very few things till now so I will build
+Judge0 from scratch for sure
+That's it another thing I will start that project after completing sportz, super30 assignment then I will do.
+
+See Youhh
