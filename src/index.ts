@@ -440,7 +440,7 @@ app.post(
         });
 
         if (!contest)
-            return res.status(400).json({
+            return res.status(404).json({
                 success: false,
                 data: null,
                 error: "CONTEST_NOT_FOUND",

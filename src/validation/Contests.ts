@@ -33,12 +33,14 @@ export const DsaSchema = z.object({
     timeLimit: z.number(),
     memoryLimit: z.number(),
     testCases: z
-        .object({
-            input: z.string(),
-            expectedOutput: z.string(),
-            isHidden: z.boolean(),
-        })
-        .array(),
+        .array(
+            z.object({
+                input: z.string(),
+                expectedOutput: z.string(),
+                isHidden: z.boolean(),
+            }),
+        )
+        .min(1),
 });
 
 export const problemID = z.coerce.number();
